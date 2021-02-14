@@ -21,7 +21,6 @@ import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
-import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemEnchantedBook;
@@ -41,6 +40,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import wards.Wards;
 import wards.WardsConfig;
 import wards.effect.WardEffect;
 import wards.function.EnchantmentTypeHelper;
@@ -107,15 +107,42 @@ public class TileEntityWard extends TileEntity implements ITickable
 		return this.book;
 	}
 	
-	public boolean fuelWard(Item item)
+	public boolean fuelWard(ItemStack item)
 	{
-		if(power + (item == Items.DYE ? 24000 : 48000) > maxPower)
-		{
-			return false;
-		}
+        int fuelPower = -1;
+        for (String source : WardsConfig.powerSources) {
+            if (source.isEmpty()) continue;
+            String[] parts = source.split(";");
+            String[] s = parts[0].split(":");
+            try {
+                switch (s.length) {
+                    case 1:
+                        ResourceLocation r1 = new ResourceLocation(s[0]);
+                        if (item.getItem().getRegistryName().toString().equals(r1.toString()))
+                            fuelPower = Integer.parseInt(parts[1]);
+                        break;
+                    case 2:
+                        ResourceLocation r2 = new ResourceLocation(s[0], s[1]);
+                        if (item.getItem().getRegistryName().toString().equals(r2.toString()))
+                            fuelPower = Integer.parseInt(parts[1]);
+                        break;
+                    case 3:
+                        ResourceLocation r3 = new ResourceLocation(s[0], s[1]);
+                        if (item.getItem().getRegistryName().toString().equals(r3.toString()) && (s[2].equals("*") || s[2].equals(String.valueOf(item.getMetadata()))))
+                            fuelPower = Integer.parseInt(parts[1]);
+                        break;
+                    default:
+                        break;
+                }
+            } catch (NumberFormatException e) {
+                Wards.logger.error("Error while parsing power value for source " + source);
+            }
+        }
+
+		if(fuelPower < 0 || power + fuelPower > maxPower) return false;
 		else
 		{
-			power += item == Items.DYE ? 24000 : 48000; //lapis or enchanted paper
+			power += fuelPower;
 			updateTE();
 			this.spawnParticles(EnumParticleTypes.ENCHANTMENT_TABLE, 15);
 			return true;

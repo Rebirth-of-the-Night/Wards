@@ -73,7 +73,7 @@ public class BlockWard extends Block
 			}
 			else if((stack.getItem() == Items.DYE && EnumDyeColor.byDyeDamage(stack.getMetadata()) == EnumDyeColor.BLUE) || stack.getItem() == Wards.enchanted_paper)
 			{
-				if(ward.fuelWard(stack.getItem()))
+				if(ward.fuelWard(stack))
 				{
 					if(!player.isCreative())
 					{
